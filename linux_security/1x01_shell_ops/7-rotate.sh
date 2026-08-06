@@ -7,7 +7,7 @@ mkdir -p "$1/backups"
 
 for file in "$1"/*.log
 do
-        size=$(stat -c %s "$file")
+        size=$(stat -c%s "$file")
         name_file=$(basename "$file")
 
         if [ "$size" -gt 1024 ]; then

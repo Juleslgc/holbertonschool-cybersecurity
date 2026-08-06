@@ -5,7 +5,7 @@ fi
 
 mkdir -p "$1/backups"
 
-find "$1" -type f -name "*.log" | while read file
+for file in "$1"/*.log
 do
         size=$(stat -c %s "$file")
         name_file=$(basename "$file")

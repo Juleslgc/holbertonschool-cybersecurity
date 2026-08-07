@@ -5,7 +5,7 @@ while read -r user
 do
     for group in disk docker shadow
     do
-        if getent group "$group" | grep -qE "(:|,)$user(,|$)"; then
+        if id "$user" | grep -qw "$group"; then
             echo "$user:$group"
         fi
     done

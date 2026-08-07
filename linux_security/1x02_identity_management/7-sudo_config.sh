@@ -1,5 +1,6 @@
 #!/bin/bash
 touch /etc/sudoers.d/junior
 echo "$1 ALL=(root) /usr/bin/systemctl restart apache2, /usr/bin/journalctl" > /etc/sudoers.d/junior
+chmod 400 /etc/sudoers.d/junior
 visudo -c /etc/sudoers.d/junior
 

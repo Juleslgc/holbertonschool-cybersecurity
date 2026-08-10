@@ -1,2 +1,2 @@
 #!/bin/bash
-ps -eo pid,comm,pcpu --sort=-%cpu | sed -n '2p' | awk '{ print $1, $2  }'  
+ps -eo pid,pcpu,comm --sort=-%cpu | sed -n '2p' | awk '{ print $1, $3  }'  

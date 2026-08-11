@@ -1,2 +1,2 @@
 #!/bin/bash
-ps -Z | awk 'NR >= 2 { print $2 }'
+ps -eo pid | awk 'NR >= 2 { print $1 }'

@@ -26,7 +26,7 @@ done
 }
 
 check_integrity() {
-for file in "${FILES_TO_WATCH}"
+for file in "${FILES_TO_WATCH[@]}"
 do
 	filename=$(basename "$file")
 	gold="/var/backups/sentinel/${filename}.gold"

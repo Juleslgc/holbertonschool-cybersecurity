@@ -26,16 +26,19 @@ done
 }
 
 check_integrity() {
-filename=$(basename "$file")
-gold="/var/backups/sentinel/${filename}.gold"
+for file in "${FILES_TO_WATCH}"
+do
+	filename=$(basename "$file")
+	gold="/var/backups/sentinel/${filename}.gold"
 
-file_hash=$(md5sum "$file" | awk '{print $1}')
-gold_hash=$(md5sum "$gold" | awk '{print $1}')
-
-if [[ "$file_hash" == "$gold_hash" ]]; then
-	logger "OK: $file integrity verified"
-else
-	cp "$gold" "$file"
-	logger "FIXED: Restored $file"
-fi
+	file_hash=$(md5sum "$file" | awk '{print $1}')
+	gold_hash=$(md5sum "$gold" | awk '{print $1}')
+	
+	if [[ "$file_hash" == "$gold_hash" ]]; then
+		logger "OK: $file integrity verified"
+	else
+		cp "$gold" "$file"
+		logger "FIXED: Restored $file"
+	fi
+done
 }

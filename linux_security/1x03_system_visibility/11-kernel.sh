@@ -1,8 +1,2 @@
 #!/bin/bash
-if [ -f "$1" ]; then
-	grep "segfault" "$1"
-fi
-
-if [ -f /var/log/message ]; then
-	grep "segfault" /var/log/message
-fi
+grep "segfault" "$1" 2>/dev/null || grep "segfault" /var/log/messages 2>/dev/null

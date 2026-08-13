@@ -11,7 +11,7 @@ if [ ! -v FILES_TO_WATCH ]; then
 fi
 
 log() {
-	timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+	timestamp=$(date -u +%FT%TZ)
 
     echo "{\"timestamp\":\"$timestamp\",\"component\":\"$1\",\"target\":\"$2\",\"status\":\"$3\",\"details\":\"$4\"}" >> /var/log/sentinel.log
 }

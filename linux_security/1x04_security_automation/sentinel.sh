@@ -10,16 +10,22 @@ if [ ! -v FILES_TO_WATCH ]; then
 	exit 1
 fi
 
+log() {
+	timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+    echo "{\"timestamp\":\"$timestamp\",\"component\":\"$1\",\"target\":\"$2\",\"status\":\"$3\",\"details\":\"$4\"}" >> /var/log/sentinel.log
+}
+
 check_services() {
 for svc in "${SERVICES[@]}"
 do
 	if pgrep -f "$svc"; then
-		logger "OK: $svc is running"
+		log "SERVICES" "$svc" "OK"  "$svc is running"
 	else
 		if eval "$svc"; then
-			logger "FIXED: Restarted $svc"
+			log "SERVICES" "$svc" "FIXED" "Restarted $svc"
 		else
-			logger "Error"
+			log "SERVICES" "$svc" "ALERT" "Failed restarted $svc"
 		fi
 	fi
 done
@@ -35,10 +41,10 @@ do
 	gold_hash=$(md5sum "$gold" | awk '{print $1}')
 	
 	if [[ "$file_hash" == "$gold_hash" ]]; then
-		logger "OK: $file integrity verified"
+		log "INTEGRETY" "$file" "OK" "$file integrity verified"
 	else
 		cp "$gold" "$file"
-		logger "FIXED: Restored $file"
+		log "INTEGRETY" "$file" "FIXED" "Restored $file"
 	fi
 done
 }
@@ -61,7 +67,7 @@ check_ports() {
 
             if [ -n "$pid" ]; then
                 kill "$pid"
-                logger "ALERT: Killed rogue process on port $port"
+                log "PORTS" "$port" "ALERT" "Killed rogue process on port $port"
             fi
         fi
     done

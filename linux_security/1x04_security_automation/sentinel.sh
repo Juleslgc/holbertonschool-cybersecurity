@@ -42,3 +42,27 @@ do
 	fi
 done
 }
+
+check_ports() {
+    for port in $(ss -lnt | awk 'NR > 1 {split($4, a, ":"); print a[length(a)]}')
+    do
+        allowed=false
+
+        for ports in "${ALLOWED_PORTS[@]}"
+        do
+            if [ "$ports" -eq "$port" ]; then
+                allowed=true
+                break
+            fi
+        done
+
+        if [ "$allowed" = false ]; then
+            pid=$(lsof -t -i :"$port")
+
+            if [ -n "$pid" ]; then
+                kill "$pid"
+                logger "ALERT: Killed rogue process on port $port"
+            fi
+        fi
+    done
+}

@@ -5,3 +5,5 @@ Description=Sentinel Security Agent
 Type=oneshot
 ExecStart=/home/student/sentinel.sh
 User=root
+
+[Install]

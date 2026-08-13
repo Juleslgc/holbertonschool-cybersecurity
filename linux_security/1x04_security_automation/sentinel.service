@@ -7,3 +7,5 @@ ExecStart=/home/student/sentinel.sh
 User=root
 
 [Install]
+WantedBy=multi-user.target
+

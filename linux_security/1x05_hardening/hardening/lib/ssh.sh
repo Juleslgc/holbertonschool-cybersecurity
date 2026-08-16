@@ -1,37 +1,29 @@
 #!/bin/bash
 
-configure_ssh() {
+harden_ssh() {
+    log "Starting SSH hardening"
 
-        log "Starting SSH hardening"
+    if [ ! -f "$SSHD_CONFIG" ]; then
+        log "ERROR: SSH config not found"
+        return 1
+    fi
 
-        if [ ! -f "$SSHD_CONFIG" ]; then
-                log "ERROR: $SSHD_CONFIG does not exist"
-                return 1
-        fi
+    # Delete old configurations
+    sed -i '/PasswordAuthentication/d' "$SSHD_CONFIG"
+    sed -i '/PubkeyAuthentication/d' "$SSHD_CONFIG"
+    sed -i '/PermitRootLogin/d' "$SSHD_CONFIG"
 
-        # Remove existing directives
-        sed -i '/^[[:space:]]*#*[[:space:]]*PasswordAuthentication[[:space:]]/d' "$SSHD_CONFIG"
-        sed -i '/^[[:space:]]*#*[[:space:]]*PubkeyAuthentication[[:space:]]/d' "$SSHD_CONFIG"
-        sed -i '/^[[:space:]]*#*[[:space:]]*PermitRootLogin[[:space:]]/d' "$SSHD_CONFIG"
+    # Add the new configuration
+    echo "PasswordAuthentication no" >> "$SSHD_CONFIG"
+    echo "PubkeyAuthentication yes" >> "$SSHD_CONFIG"
+    echo "PermitRootLogin no" >> "$SSHD_CONFIG"
 
-        # Add our configuration
-        cat >> "$SSHD_CONFIG" <<EOF
+    # Check the configuration
+    if ! sshd -t -f "$SSHD_CONFIG"; then
+        log "ERROR: Invalid SSH configuration"
+        return 1
+    fi
 
-# Hardening configuration
-PasswordAuthentication no
-PubkeyAuthentication yes
-PermitRootLogin no
-EOF
-
-        # Validate SSH configuration
-        if sshd -t -f "$SSHD_CONFIG"; then
-                log "SSH configuration validated successfully"
-        else
-                log "ERROR: Invalid SSH configuration"
-                return 1
-        fi
-
-        log "SSH hardening completed"
-
-        return 0
+    log "SSH hardening completed"
+    return 0
 }

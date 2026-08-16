@@ -1,6 +1,6 @@
 #!/bin/bash
 
-configure_network() {
+harden_network() {
 
         log "Starting network hardening"
 
@@ -50,7 +50,7 @@ EOF
 }
 
 
-configure_kernel() {
+harden_kernel() {
 
         log "Configuring persistent kernel parameters"
 

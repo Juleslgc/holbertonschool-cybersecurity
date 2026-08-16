@@ -10,31 +10,30 @@ log() {
 }
 
 source config/harden.cfg
+source lib/logging.sh
 source lib/network.sh
 source lib/ssh.sh
 source lib/identity.sh
 source lib/system.sh
+source lib/report.sh
 
-log "Hardening framework initialized"
+REPORT_INFO=()
+REPORT_WARN=()
+REPORT_ERROR=()
 
-if ! configure_network; then
-        log "ERROR: Network hardening failed"
-        exit 1
-fi
+log INFO "Hardening framework initialized"
 
-if ! configure_ssh; then
-        log "ERROR: SSH hardening failed"
-        exit 1
-fi
+harden_network
+configure_firewall
+harden_kernel
+harden_ssh
+harden_identity
+configure_password_policy
+configure_lockout
+configure_lockout
+cleanup_users
+lock_root
+harden_system
+generate_report
 
-if ! configure_identity; then
-        log "ERROR: Identity hardening failed"
-        exit 1
-fi
-
-if ! configure_system; then
-        log "ERROR: System hardening failed"
-        exit 1
-fi
-
-log "Hardening completed"
+log INFO "Hardening procedure completed successfully."

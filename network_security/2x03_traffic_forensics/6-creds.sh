@@ -1,2 +1,2 @@
 #!/bin/bash
-tshark -r "$1" -Y http.request -T fields -e http.file_data | xxd -r -p | grep -oE '(^|&)(password|pass|pwd)=[^&]*' | cut -d= -f2
+tshark -r "$1" -Y 'urlencoded-form.key == "password" || urlencoded-form.key == "pass" || urlencoded-form.key == "pwd"' -T fields -e urlencoded-form.value | cut -d, -f2

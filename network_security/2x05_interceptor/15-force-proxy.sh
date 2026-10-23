@@ -1,0 +1,2 @@
+#!/bin/bash
+sudo nft add rule inet filter output tcp port { 80, 443 } accept && sudo ntf add rule inet filter forward ip saddr 10.200.0.0/24 tcp port 80 drop && sudo ntf add rule inet filter forward ip saddr 10.200.0.0/24 tcp port 443 drop

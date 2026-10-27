@@ -18,25 +18,43 @@ The following policies are proposed for the nftables `inet` table.
 
 The `output` policy is initially permissive to reduce the risk of interrupting system updates, DNS, monitoring, and other required services. It should be reviewed and restricted if justified by the security requirements.
 
+The `input` chain must allow WireGuard connections on UDP port `51820` from the external interface and SSH connections on TCP port `22` only from the authorized administrator VPN. All other incoming SSH connections must be dropped.
+
 These are target policies, not verified settings on the current system.
 
 ## 3. Rules and Justifications
 
-| Source | Destination | Service | Action | Justification |
-|---|---|---|---|---|
-| Any | Gateway | Established and related connections | Allow | Permit legitimate response traffic |
-| Any | Gateway | Invalid connection states | Drop | Reject malformed or unexpected traffic |
-| Any | Gateway | Loopback traffic | Allow | Support local system communications |
-| Internet | Gateway | WireGuard, UDP 51820 | Allow | Enable secure remote access |
-| Administrator VPN | Gateway or approved admin host | SSH, TCP 22 | Allow | Permit authorized administration |
-| Finance VPN | FTP server | TCP 21 and approved passive ports | Allow conditionally | Support the legacy file-transfer service |
-| Application server | Database server | TCP 3306 | Allow | Permit required application database access |
-| Internet | Database server | TCP 3306 | Deny | Prevent direct public database access |
-| Internet | SSH or FTP | Relevant service ports | Deny | Prevent direct public access |
-| Internet | Reverse proxy | HTTPS, TCP 443 | Allow conditionally | Publish a web service only if required |
-| Reverse proxy | Application server | Required application port | Allow conditionally | Permit approved web traffic |
-| Reverse proxy | Database server | Any direct database connection | Deny | Prevent the proxy from bypassing the application |
-| Other traffic | Protected destinations | Any | Deny by default | Block unapproved connections |
+| Chain | Source | Destination | Service | Action | Justification |
+|---|---|---|---|---|---|
+| `input` | Gateway (`lo`) | Gateway | Loopback traffic | Allow | Support local system communications |
+| `input` | Any | Gateway | Invalid connection states | Drop | Reject malformed or unexpected traffic |
+| `input` | Any | Gateway | Established and related connections | Allow | Permit legitimate response traffic |
+| `input` | Any | Gateway | Required ICMP/ICMPv6 | Allow | Support diagnostics and essential network functions |
+| `input` | Internet / WAN | Gateway | WireGuard, UDP 51820 | Allow | Enable secure remote access |
+| `input` | Administrator VPN | Gateway | SSH, TCP 22 | Allow | Permit authorized administration |
+| `input` | Unauthorized sources | Gateway | SSH, TCP 22 | Deny | Prevent unauthorized SSH access |
+| `input` | Any | Gateway | Other incoming services | Deny by default | Block unapproved access to the gateway |
+| `forward` | Any | Any | Invalid connection states | Drop | Reject invalid forwarded packets |
+| `forward` | Any | Any | Established and related connections | Allow | Permit responses to authorized forwarded connections |
+| `forward` | Finance VPN | FTP server | TCP 21 | Allow conditionally | Permit authorized FTP control connections |
+| `forward` | Finance VPN | FTP server | Configured passive TCP ports | Allow conditionally | Support FTP passive-mode file transfers |
+| `forward` | Unauthorized sources | FTP server | TCP 21 and passive ports | Deny | Restrict FTP access to authorized Finance peers |
+| `forward` | Application server | Database server `192.168.1.50` | TCP 3306 | Allow | Permit required application database access |
+| `forward` | Internet | Database server `192.168.1.50` | TCP 3306 | Deny | Prevent direct public database access |
+| `forward` | Finance VPN | Database server `192.168.1.50` | TCP 3306 | Deny by default | Prevent unauthorized Finance database access |
+| `forward` | Internet | Internal SSH or FTP servers | Relevant service ports | Deny | Prevent direct public access to internal services |
+| `forward` | Internet | Reverse proxy | HTTPS, TCP 443 | Allow conditionally | Publish a web service only if required |
+| `forward` | Reverse proxy | Application server | Approved application port | Allow conditionally | Permit approved web traffic |
+| `forward` | Reverse proxy | Database server `192.168.1.50` | Any direct database connection | Deny | Prevent the proxy from bypassing the application |
+| `forward` | Other sources | Protected internal destinations | Any unauthorized traffic | Deny by default | Enforce network segmentation |
+| `output` | Gateway (`lo`) | Gateway | Loopback traffic | Allow | Support local system communications |
+| `output` | Gateway | Any | Invalid connection states | Drop | Reject invalid outgoing packets |
+| `output` | Gateway | Any | Established and related connections | Allow | Permit legitimate ongoing communications |
+| `output` | Gateway | Approved DNS resolver | DNS, UDP/TCP 53 | Allow if required | Resolve domain names |
+| `output` | Gateway | Approved NTP server | NTP, UDP 123 | Allow if required | Synchronize the system clock |
+| `output` | Gateway | Approved repositories | HTTPS, TCP 443 | Allow if required | Download security updates |
+| `output` | Gateway | Approved log collector | Configured logging protocol and port | Allow if required | Forward security logs |
+| `output` | Gateway | External or internal destinations | Other required outbound services | Allow initially | Preserve essential gateway communications |
 
 The FTP passive port range must be explicitly configured and kept consistent with the firewall. The exact range and service ports must be confirmed before deployment.
 

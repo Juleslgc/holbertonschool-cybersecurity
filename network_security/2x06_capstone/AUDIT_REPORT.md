@@ -1,10 +1,10 @@
 # LogiCorp Gateway — Technical Audit Report
 
-Audit type: Black Box Security Audit
-Target: LogiCorp Gateway
-Auditor: Jules
-Date: 10/26/2026
-Version: 1.0
+**Audit type:** Black Box Security Audit  
+**Target:** LogiCorp Gateway  
+**Auditor:** Jules  
+**Date:** 10/26/2026  
+**Version:** 1.0
 
 ## 1. Executive Summary
 This report documents a black box security audit of the LogiCorp Gateway. The objective is to identify the system's actual configuration, discover its exposed services, assess its security controls, and compare the findings against the available documentation.
@@ -48,7 +48,7 @@ All findings must be supported by collected evidence. Missing information is cla
 | Operating system | Ubuntu 22.04.5 LTS |
 | OS Version | 22.04 |
 | Kernel Version | 6.1.188 |
-| System uptime | 2hours, 50 minutes |
+| System uptime | 2 hours, 50 minutes |
 | Audit timestamp | 2026-10-26T11:06:17+00:00 |
 
 ### 3.2 Assessment
@@ -61,25 +61,25 @@ The operating system and kernel versions must be checked against their official 
 
 | Interface | State | IP Address | MAC Address | Purpose |
 |----|-----|----|----|-----|
-| lo | UNKNOWN | 127.0.0.1/8 | N/A | Loopback |
-| eth0@if5 | UP | 169.254.172.2/22 | 0a:58:a9:fe:ac:02 | Ethernet virtuelle |
-| eth1 | UP | 10.42.179.90/16 | 0a:ff:f2:9d:e8:69 | Ethernet connectivity |
+| `lo` | UNKNOWN | `127.0.0.1/8` | N/A | Loopback |
+| `eth0@if5` | UP | `169.254.172.2/22` | `0a:58:a9:fe:ac:02` | Ethernet virtuelle |
+| `eth1` | UP | `10.42.179.90/16` | `0a:ff:f2:9d:e8:69` | Ethernet connectivity |
 
 ### 4.2 Routing Tables
 
 | Destination | Gateway | Interface | Assessment |
 |----|----|----|----|
-| default | 10.42.0.1 | eth1 | Default route |
-| 10.42.0.0/16 | none | eth1 | Local network src 10.42.179.90 |
-| blackhole 169.254.169.254 | none | - | Route blocking traffic to this address |
-| 169.254.170.2 | 169.254.172.1 | eth0 | Link local via gateway |
-| 169.254.172.1 | none | eth0 | gateway |
+| `default` | `10.42.0.1` | `eth1` | Default route |
+| `10.42.0.0/16` | none | `eth1` | Local network src `10.42.179.90` |
+| `blackhole 169.254.169.254` | none | - | Route blocking traffic to this address |
+| `169.254.170.2` | `169.254.172.1` | `eth0` | Link local via gateway |
+| `169.254.172.1` | none | `eth0` | Gateway |
 
 ### 4.3 ARP and Neighbor Tables
 
 | IP Address | MAC Address | Interface | Neighbor state |
 |---|---|---|---|
-| 10.42.0.1 | 0a:b0:93:32:a4:d0 | eth1 | REACHABLE |
+| `10.42.0.1` | `0a:b0:93:32:a4:d0` | `eth1` | REACHABLE |
 
 The neighbor table represents only the entries currently known to the gateway. It does not necessarily identify every device connected to the network.
 
@@ -101,11 +101,11 @@ Status: Verified.
 
 | Protocol | Local Address | Port | State | Service |
 |---|---|---|---|---|
-| TCP | 0.0.0.0 | 22 | LISTEN | SSH |
-| TCP | 0.0.0.0 | 3000 | LISTEN | To be identified |
-| TCP | 0.0.0.0 | 3001 | LISTEN | To be identified |
-| TCP | [::] | 22 | LISTEN | SSH via IPv6 |
-| TCP | * | 21 | LISTEN | FTP |
+| `TCP` | 0.0.0.0 | `22` | LISTEN | SSH |
+| `TCP` | 0.0.0.0 | `3000` | LISTEN | To be identified |
+| `TCP` | 0.0.0.0 | `3001` | LISTEN | To be identified |
+| `TCP` | [::] | `22` | LISTEN | SSH via IPv6 |
+| `TCP` | * | `21` | LISTEN | FTP |
 
 **Port 3000/TCP:** The HTTP service returns `403 Forbidden` when requesting `/`. The server refuses access to the requested resource. The reason for the restriction remains unidentified.
 

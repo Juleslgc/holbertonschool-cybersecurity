@@ -2,10 +2,27 @@
 import argparse
 import sys
 import re
+import logging
 
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
+formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+
+console = logging.StreamHandler()
+console.setLevel(logging.INFO)
+console.setFormatter(formatter)
+
+file = logging.FileHandler("breach_check.log")
+file.setLevel(logging.DEBUG)
+file.setFormatter(formatter)
+
+logger.addHandler(console)
+logger.addHandler(file)
 
 def main():
-    print("BreachCheck v1.0 startup...")
+    
+    logging.info("INFO: Processing file...")
     parser = argparse.ArgumentParser(
         description="Command Line Interface - Breach Check"
     )
@@ -33,13 +50,13 @@ def main():
 
     lines = read_file(args.file)
     result = clean_data(lines)
-    return validate_line(result)
+    validate_line(result)
 
     if args.verbose:
-        print("Verbose mode enabled")
+        logging.info("Verbose mode enabled")
 
     if args.output:
-        print(f"Output file: {args.output}")
+        logging.info(f"Output file: {args.output}")
 
 
 def read_file(filename: str) -> list:
@@ -47,10 +64,10 @@ def read_file(filename: str) -> list:
         with open(filename, "r") as file:
             return file.readlines()
     except FileNotFoundError:
-        print(f"[ERROR] File not found: {filename}", file=sys.stderr)
+        logging.error(f"[ERROR] File not found: {filename}")
         sys.exit(1)
     except PermissionError:
-        print(f"[ERROR] Permission denied: {filename}", file=sys.stderr)
+        logging.error(f"[ERROR] Permission denied: {filename}")
         sys.exit(1)
 
 
@@ -64,6 +81,7 @@ def clean_data(lines: list) -> list:
 
 
 def validate_line(line: str) -> bool:
+    logging.debug("DEBUG: Starting regex check on line 42...")
     if re.search(r"[\w.-]+@[\w.-]+\.\w+:.+", line):
         return True
     else:

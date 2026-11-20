@@ -26,7 +26,7 @@ logger.addHandler(file)
 config = configparser.ConfigParser()
 
 if not config.read("config.ini"):
-    logging.error("[ERROR] Config file missing")
+    logging.error("[ERROR] config file missing")
     sys.exit(1)
 SALT = config.get("SECURITY", "Salt")
 MINLENGTH = config.getint("SECURITY", "MinLength")

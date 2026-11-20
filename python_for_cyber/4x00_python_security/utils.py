@@ -18,7 +18,8 @@ COMMON = config.get("SECURITY", "CommonList").split(",")
 def read_file(filename: str) -> list:
     try:
         with open(filename, "r") as file:
-            return file.readlines()
+            for line in file:
+                yield line.strip()
     except FileNotFoundError:
         logging.error(f"[ERROR] File not found: {filename}")
         sys.exit(1)

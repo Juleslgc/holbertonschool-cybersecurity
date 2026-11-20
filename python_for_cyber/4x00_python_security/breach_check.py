@@ -4,6 +4,7 @@ import sys
 import re
 import logging
 import hashlib
+import configparser
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -20,6 +21,16 @@ file.setFormatter(formatter)
 
 logger.addHandler(console)
 logger.addHandler(file)
+
+
+config = configparser.ConfigParser()
+
+if not config.read("config.ini"):
+    logging.error("[ERROR] Config file missing")
+    sys.exit(1)
+SALT = config.get("SECURITY", "Salt")
+MINLENGTH = config.getint("SECURITY", "MinLength")
+COMMON = config.get("SECURITY", "CommonList").split(",")
 
 
 def main():
@@ -90,14 +101,14 @@ def validate_line(line: str) -> bool:
 
 
 def check_policy(password: str) -> str:
-    common_password = ['password', '123456']
-    if len(password) < 8 or password.isalpha() or password in common_password:
+    if len(password) < MINLENGTH or password.isalpha() or password in COMMON:
         return ("WEAK")
     else:
         return ("COMPLIANT")
 
 
 def hash_password(password: str, salt: str) -> str:
+    salt = SALT
     return hashlib.sha256(password.encode() + salt.encode()).hexdigest()
 
 

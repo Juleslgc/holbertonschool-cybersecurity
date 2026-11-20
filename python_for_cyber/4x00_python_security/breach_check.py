@@ -20,8 +20,8 @@ file.setFormatter(formatter)
 logger.addHandler(console)
 logger.addHandler(file)
 
+
 def main():
-    
     logging.info("INFO: Processing file...")
     parser = argparse.ArgumentParser(
         description="Command Line Interface - Breach Check"
@@ -86,6 +86,14 @@ def validate_line(line: str) -> bool:
         return True
     else:
         return False
+
+
+def check_policy(password: str) -> str:
+    common_password = ['password', '123456']
+    if len(password) < 8 or password.isalpha() or password in common_password:
+        logging.error("WEAK")
+    else:
+        logging.error("COMPLIANT")
 
 
 if __name__ == "__main__":

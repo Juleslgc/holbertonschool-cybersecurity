@@ -3,6 +3,7 @@ import argparse
 import sys
 import re
 import logging
+import hashlib
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -91,9 +92,13 @@ def validate_line(line: str) -> bool:
 def check_policy(password: str) -> str:
     common_password = ['password', '123456']
     if len(password) < 8 or password.isalpha() or password in common_password:
-        return("WEAK")
+        return ("WEAK")
     else:
-        return("COMPLIANT")
+        return ("COMPLIANT")
+
+
+def hash_password(password: str, salt: str) -> str:
+    return hashlib.sha256(password.encode() + salt.encode()).hexdigest()
 
 
 if __name__ == "__main__":

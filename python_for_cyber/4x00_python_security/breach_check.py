@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import sys
+import re
 
 
 def main():
@@ -31,7 +32,8 @@ def main():
     args = parser.parse_args()
 
     lines = read_file(args.file)
-    clean_data(lines)
+    result = clean_data(lines)
+    return validate_line(result)
 
     if args.verbose:
         print("Verbose mode enabled")
@@ -59,6 +61,13 @@ def clean_data(lines: list) -> list:
         if line and not line.strip().startswith("#"):
             cleaned_line.append(line)
     return cleaned_line
+
+
+def validate_line(line: str) -> bool:
+    if re.search(r"[\w.-]+@[\w.-]+\.\w+:.+", line):
+        return True
+    else:
+        return False
 
 
 if __name__ == "__main__":

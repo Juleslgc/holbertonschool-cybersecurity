@@ -22,7 +22,7 @@ def main():
     )
 
     parser.add_argument(
-        "-o", "-output",
+        "-o", "--output",
         type=str,
         help="Path to the output report file"
     )

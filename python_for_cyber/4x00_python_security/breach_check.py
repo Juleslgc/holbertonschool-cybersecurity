@@ -91,9 +91,9 @@ def validate_line(line: str) -> bool:
 def check_policy(password: str) -> str:
     common_password = ['password', '123456']
     if len(password) < 8 or password.isalpha() or password in common_password:
-        logging.error("WEAK")
+        return("WEAK")
     else:
-        logging.error("COMPLIANT")
+        return("COMPLIANT")
 
 
 if __name__ == "__main__":

@@ -30,7 +30,8 @@ def main():
 
     args = parser.parse_args()
 
-    read_file(args.file)
+    lines = read_file(args.file)
+    clean_data(lines)
 
     if args.verbose:
         print("Verbose mode enabled")
@@ -49,6 +50,15 @@ def read_file(filename: str) -> list:
     except PermissionError:
         print(f"[ERROR] Permission denied: {filename}", file=sys.stderr)
         sys.exit(1)
+
+
+def clean_data(lines: list) -> list:
+    cleaned_line = []
+    for line in lines:
+        line = line.strip()
+        if line and not line.strip().startswith("#"):
+            cleaned_line.append(line)
+    return cleaned_line
 
 
 if __name__ == "__main__":

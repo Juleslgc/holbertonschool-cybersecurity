@@ -30,7 +30,7 @@ def main():
 
     args = parser.parse_args()
 
-    print(f"Input file: {args.file}")
+    read_file(args.file)
 
     if args.verbose:
         print("Verbose mode enabled")

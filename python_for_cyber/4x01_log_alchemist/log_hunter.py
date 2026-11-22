@@ -27,6 +27,11 @@ GEOIP_DB = {
     '5.6.7.8': 'RU'
     }
 
+BLACKLIST = {
+    "10.0.0.1",
+    "192.168.1.66"
+}
+
 
 def read_stream(file_path: str):
     """Read a file one line at a time using a generator"""
@@ -148,6 +153,15 @@ def analyze_user_agent(log_entry):
     return log_entry
 
 
+def check_threat_intel(log_entry):
+    if log_entry.ip in BLACKLIST:
+        log_entry.alert_level = "HIGH"
+    else:
+        log_entry.alert_level = "LOW"
+
+    return log_entry
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("file", help="Path to the lof file")
@@ -219,3 +233,18 @@ if __name__ == "__main__":
         f"({known_ips} known IPs)"
     )
     print(f"[*] Bots detected: {bot_count}")
+
+    print("--- Threat Intelligence ---")
+
+    high_alerts = 0
+
+    for entry in entries:
+        check_threat_intel(entry)
+
+        if entry.alert_level == "HIGH":
+            high_alerts += 1
+
+    print(
+        f"[*] HIGH alerts: {high_alerts} "
+        "entries from blacklisted IPs"
+    )

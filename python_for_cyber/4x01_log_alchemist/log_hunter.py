@@ -5,6 +5,8 @@ import re
 from collections.abc import Iterable, Iterator
 from collections import Counter, defaultdict, deque
 from datetime import datetime, timezone
+import json
+from dataclasses import asdict, is_dataclass
 
 # Pre-compile Apache regex
 APACHE_PATETERN = re.compile(
@@ -318,9 +320,46 @@ def correlate_events(entries):
             states[ip].clear()
 
 
+def export_report(alerts, filename, format="json"):
+    if format.lower() != "json":
+        raise ValueError("Unsupported report format")
+
+    report_data = []
+
+    for alert in alerts:
+        if isinstance(alert, dict):
+            report_data.append(alert)
+
+        elif is_dataclass(alert):
+            report_data.append(asdict(alert))
+
+        elif hasattr(alert, "__dict__"):
+            report_data.append(vars(alert))
+
+        else:
+            raise TypeError(f"Unsupported alert type: {type(alert).__name__}")
+
+    with open(filename, "w", encoding="utf-8") as file:
+        json.dump(
+            report_data,
+            file,
+            indent=2,
+            ensure_ascii=False,
+            default=lambda obj: (
+                obj.isoformat()
+                if isinstance(obj, datetime)
+                else str(obj)
+            )
+        )
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("file", help="Path to the lof file")
+    parser.add_argument(
+        "--report",
+        help="Export alerts to a JSON report file"
+    )
 
     args = parser.parse_args()
 
@@ -455,3 +494,20 @@ if __name__ == "__main__":
     for incident in critical_incidents:
         stages = " -> ".join(incident["stages"])
         print(f"    {incident['ip']}: {stages}")
+
+    all_alerts = (
+        brute_force_alerts
+        + burst_alerts
+        + critical_incidents
+    )
+
+    if args.report:
+        export_report(all_alerts, args.report)
+
+        print(
+            f"[*] Report exported: {args.report} "
+            f"({len(all_alerts)} alerts)"
+        )
+    else:
+        print(f"[*] Total alerts: {len(all_alerts)}")
+        print("[*] Use --report <file> to export.")

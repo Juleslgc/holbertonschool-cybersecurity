@@ -212,7 +212,7 @@ def detect_bruteforce(entries):
         if not ip:
             continue
 
-        if getattr(entry, "status", None) == 401:
+        if str(getattr(entry, "status", None)) == "401":
             failures[ip] += 1
         elif "Failed password" in getattr(entry, "message", ""):
             failures[ip] += 1

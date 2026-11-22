@@ -2,6 +2,7 @@
 
 import argparse
 import re
+from collections.abc import Iterable, Iterator
 
 # Pre-compile Apache regex
 APACHE_PATETERN = re.compile(
@@ -106,6 +107,15 @@ def normalize_entry(parsed_dict, log_type, raw_line='') -> LogEntry:
     return None
 
 
+def filter_logs(stream: Iterable[LogEntry],
+                status_codes=[404, 500]) -> Iterator[LogEntry]:
+    for entry in stream:
+        status = getattr(entry, "status", None)
+
+        if status in status_codes:
+            yield entry
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("file", help="Path to the lof file")
@@ -138,6 +148,7 @@ if __name__ == "__main__":
     print(f"[*] Apache lines:  {apache_count}")
     print(f"[*] Syslog lines:  {syslog_count}")
     print(f"[*] Total parsed:  {len(entries)}")
+
     if entries:
         sample = next(
             (entry for entry in entries if entry.service == "http"),
@@ -151,3 +162,7 @@ if __name__ == "__main__":
             f"status={sample.status} | "
             f"path={sample.path}"
         )
+
+    print("--- Filtering ---")
+    suspicious_entries = list(filter_logs(entries))
+    print(f"[*] Suspicious (404, 500): {len(suspicious_entries)}")

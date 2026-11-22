@@ -38,6 +38,12 @@ SQLI_PATTERNS = [
     re.compile(r"--"),
 ]
 
+XSS_PATTERNS = [
+    re.compile(r"<\s*script\b", re.IGNORECASE),
+    re.compile(r"javascript\s*:", re.IGNORECASE),
+    re.compile(r"\bonload\s*=", re.IGNORECASE),
+]
+
 
 def read_stream(file_path: str):
     """Read a file one line at a time using a generator"""
@@ -181,6 +187,17 @@ def detect_sqli(log_entry):
     return log_entry
 
 
+def detect_xss(log_entry):
+    path = getattr(log_entry, "path", "")
+
+    for pattern in XSS_PATTERNS:
+        if pattern.search(path):
+            if getattr(log_entry, "attack_type", "") != "SQLi":
+                log_entry.attack_type = "XSS"
+            break
+    return log_entry
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("file", help="Path to the lof file")
@@ -275,9 +292,12 @@ if __name__ == "__main__":
 
     for entry in entries:
         detect_sqli(entry)
+        detect_xss(entry)
 
         if getattr(entry, "attack_type", "") == "SQLi":
             sqli_count += 1
+        elif getattr(entry, "attack_type", "") == "XSS":
+            xss_count += 1
 
     print(f"[*] SQLi attempts: {sqli_count}")
     print(f"[*] XSS attempts:  {xss_count}")

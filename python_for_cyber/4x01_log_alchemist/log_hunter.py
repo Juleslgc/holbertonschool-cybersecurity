@@ -3,9 +3,7 @@
 import argparse
 import re
 from collections.abc import Iterable, Iterator
-from collections import Counter
-from datetime import datetime
-from collections import defaultdict, deque
+from collections import Counter, defaultdict, deque
 from datetime import datetime, timezone
 
 # Pre-compile Apache regex
@@ -295,6 +293,31 @@ def detect_burst(entries, threshold=10, window_seconds=60):
             }
 
 
+def correlate_events(entries):
+    states = defaultdict(set)
+
+    for entry in entries:
+        ip = getattr(entry, "ip", "")
+
+        if not ip:
+            continue
+
+        if getattr(entry, "status", None) == 404:
+            states[ip].add("scanner")
+
+        if getattr(entry, "attack_type", "") == "SQLi":
+            states[ip].add("sqli")
+
+        if "scanner" in states[ip] and "sqli" in states[ip]:
+            yield {
+                "ip": ip,
+                "stages": ["scanner", "sqli"],
+                "alert_type": "CRITICAL INCIDENT"
+            }
+
+            states[ip].clear()
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("file", help="Path to the lof file")
@@ -423,3 +446,12 @@ if __name__ == "__main__":
             f"    {alert['ip']}: {alert['count']} "
             f"requests in {alert['window']}s window"
         )
+    print("--- Correlation ---")
+
+    critical_incidents = list(correlate_events(entries))
+
+    print("[*] CRITICAL INCIDENTS:")
+
+    for incident in critical_incidents:
+        stages = " -> ".join(incident["stages"])
+        print(f"    {incident['ip']}: {stages}")

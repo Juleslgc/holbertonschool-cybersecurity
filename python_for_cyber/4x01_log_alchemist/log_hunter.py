@@ -126,6 +126,23 @@ def enrich_ip(log_entry):
     return log_entry
 
 
+def analyze_user_agent(log_entry):
+    signatures = ["sqlmap", "nikto", "curl", "python"]
+    fields = [
+        getattr(log_entry, "user_agent", ""),
+        getattr(log_entry, "message", ""),
+        getattr(log_entry, "raw_line", "")
+    ]
+
+    content = " ".join(fields).lower()
+
+    log_entry.is_bot = any(
+        signature in content
+        for signature in signatures
+    )
+    return log_entry
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("file", help="Path to the lof file")
@@ -180,14 +197,20 @@ if __name__ == "__main__":
     print("--- Enrichment ---")
 
     known_ips = 0
+    bot_count = 0
 
     for entry in entries:
         enrich_ip(entry)
+        analyze_user_agent(entry)
 
         if entry.country != "UNKNOWN":
             known_ips += 1
+
+        if entry.is_bot:
+            bot_count += 1
 
     print(
         f"[*] GeoIP: {len(entries)} entries enriched "
         f"({known_ips} known IPs)"
     )
+    print(f"[*] Bots detected: {bot_count}")

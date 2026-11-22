@@ -1,6 +1,17 @@
 #!/usr/bin/env python3
 
 import argparse
+import re
+
+# Pre-compile Apache regex
+APACHE_PATETERN = re.compile(
+    r'(?P<ip>\S+)\s+\S+\s+\S+\s+'
+    r'\[(?P<date>[^\]]+)\]\s+'
+    r'"(?P<method>\S+)\s+'
+    r'(?P<path>\S+)\s+[^"]+"\s+'
+    r'(?P<status>\d{3})\s+'
+    r'(?P<size>\d+|-)'
+)
 
 
 def read_stream(file_path: str):
@@ -13,6 +24,15 @@ def read_stream(file_path: str):
         print(f"[ERROR] File not found: {file_path}")
 
 
+def parse_apache_line(line: str) -> dict:
+    match = re.search(APACHE_PATETERN, line)
+
+    if match:
+        return match.groupdict()
+
+    return None
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("file", help="Path to the lof file")
@@ -22,12 +42,16 @@ if __name__ == "__main__":
     print("[*] LogHunter - Log Analysis Engine")
     print(f"[*] Reading: {args.file}")
 
-    line_count = 0
+    apache_count = 0
+    syslog_count = 0
 
     for line in read_stream(args.file):
-        line_count += 1
+        result = parse_apache_line(line)
 
-    if line_count == 0:
-        print("[!] No data to process. Existing.")
-    else:
-        print(f"[*] Lines read: {line_count}")
+    if result:
+        apache_count += 1
+
+    print("--- Parsing ---")
+    print(f"[*] Apache lines:  {apache_count}")
+    print(f"[*] Syslog lines:  {syslog_count}")
+    print(f"[*] Total parsed:  {apache_count + syslog_count}")

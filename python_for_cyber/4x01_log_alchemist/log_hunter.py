@@ -302,7 +302,7 @@ def correlate_events(entries):
         if not ip:
             continue
 
-        if getattr(entry, "status", None) == 404:
+        if str(getattr(entry, "status", None)) == "404":
             states[ip].add("scanner")
 
         if getattr(entry, "attack_type", "") == "SQLi":

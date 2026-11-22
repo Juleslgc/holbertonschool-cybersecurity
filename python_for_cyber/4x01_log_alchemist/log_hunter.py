@@ -91,7 +91,8 @@ def normalize_entry(parsed_dict, log_type, raw_line='') -> LogEntry:
             method=parsed_dict.get("method", ""),
             path=parsed_dict.get("path", ""),
             status=int(parsed_dict.get("status", 0)),
-            user_agent=parsed_dict.get("user_agent", "")
+            user_agent=parsed_dict.get("user_agent", ""),
+            size=parsed_dict.get("size", 0)
         )
     elif log_type == "syslog":
         message = parsed_dict.get("message", "")

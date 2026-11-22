@@ -7,6 +7,8 @@ from collections import Counter, defaultdict, deque
 from datetime import datetime, timezone
 import json
 from dataclasses import asdict, is_dataclass
+import multiprocessing
+from itertools import islice
 
 # Pre-compile Apache regex
 APACHE_PATETERN = re.compile(
@@ -353,12 +355,80 @@ def export_report(alerts, filename, format="json"):
         )
 
 
+def process_chunk(lines):
+    results = []
+
+    for line in lines:
+        parsed = parse_apache_line(line)
+
+        if parsed:
+            entry = normalize_entry(parsed, "apache", line)
+
+        else:
+            parsed = parse_syslog_line(line)
+
+            if not parsed:
+                continue
+
+            entry = normalize_entry(parsed, "syslog", line)
+
+        if entry is None:
+            continue
+
+        enrich_ip(entry)
+        analyze_user_agent(entry)
+        check_threat_intel(entry)
+        detect_sqli(entry)
+        detect_xss(entry)
+
+        results.append(entry)
+
+    return results
+
+
+def parallel_analyze(file_path, num_workers, chunk_size=1000):
+    all_entries = []
+
+    def read_chunks():
+        with open(file_path, "r", encoding="utf-8") as file:
+            while True:
+                chunk = list(islice(file, chunk_size))
+
+                if not chunk:
+                    break
+
+                yield chunk
+
+    chunks = read_chunks()
+
+    with multiprocessing.Pool(processes=num_workers) as pool:
+        while True:
+            # Un lot limité de blocs à envoyer aux workers
+            batch = list(islice(chunks, num_workers * 2))
+
+            if not batch:
+                break
+
+            results = pool.map(process_chunk, batch)
+
+            for chunk_results in results:
+                all_entries.extend(chunk_results)
+
+    return all_entries
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("file", help="Path to the lof file")
     parser.add_argument(
         "--report",
         help="Export alerts to a JSON report file"
+    )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=0,
+        help="Number of parallel workers (0 = sequential)"
     )
 
     args = parser.parse_args()
@@ -368,22 +438,49 @@ if __name__ == "__main__":
 
     apache_count = 0
     syslog_count = 0
-    entries = []
 
-    for line in read_stream(args.file):
-        result = parse_apache_line(line)
+    if args.workers > 0:
+        print(
+            f"[*] Reading: {args.file} "
+            f"(parallel: {args.workers} workers)"
+        )
 
-        if result:
-            entry = normalize_entry(result, "apache", line.rstrip("\n"))
-            entries.append(entry)
-            apache_count += 1
+        entries = parallel_analyze(
+            args.file,
+            args.workers,
+            chunk_size=1000
+        )
 
-        else:
-            result = parse_syslog_line(line)
-            if result:
-                entry = normalize_entry(result, "syslog", line.rstrip("\n"))
-                entries.append(entry)
+        for entry in entries:
+            if entry.service == "http":
+                apache_count += 1
+            elif entry.service == "ssh":
                 syslog_count += 1
+
+    else:
+        print(f"[*] Reading: {args.file} (single-threaded)")
+
+        entries = []
+
+        for line in read_stream(args.file):
+            result = parse_apache_line(line)
+
+            if result:
+                entry = normalize_entry(
+                    result, "apache", line.rstrip("\n")
+                )
+                entries.append(entry)
+                apache_count += 1
+
+            else:
+                result = parse_syslog_line(line)
+
+                if result:
+                    entry = normalize_entry(
+                        result, "syslog", line.rstrip("\n")
+                    )
+                    entries.append(entry)
+                    syslog_count += 1
 
     print("--- Parsing ---")
     print(f"[*] Apache lines:  {apache_count}")

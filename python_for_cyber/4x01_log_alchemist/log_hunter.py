@@ -60,7 +60,8 @@ class LogEntry:
     def __init__(self, ip="", timestamp="",
                  service="", message="",
                  raw_line="", method="",
-                 path="", status=0, user_agent=""):
+                 path="", status=0,
+                 user_agent="", size=0):
 
         self.ip = ip
         self.timestamp = timestamp
@@ -73,6 +74,7 @@ class LogEntry:
         self.path = path
         self.status = status
         self.user_agent = user_agent
+        self.size = size
 
 
 def normalize_entry(parsed_dict, log_type, raw_line='') -> LogEntry:

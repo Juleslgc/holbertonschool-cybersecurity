@@ -78,7 +78,8 @@ class LogEntry:
                  service="", message="",
                  raw_line="", method="",
                  path="", status=0,
-                 user_agent="", size=0, source=""):
+                 user_agent="", size=0,
+                 source="", attack_type=""):
 
         self.ip = ip
         self.timestamp = timestamp
@@ -93,6 +94,7 @@ class LogEntry:
         self.user_agent = user_agent
         self.size = size
         self.source = source
+        self.attack_type = attack_type
 
 
 def normalize_entry(parsed_dict, log_type, raw_line='') -> LogEntry:
@@ -111,7 +113,8 @@ def normalize_entry(parsed_dict, log_type, raw_line='') -> LogEntry:
             status=int(parsed_dict.get("status", 0)),
             user_agent=parsed_dict.get("user_agent", ""),
             size=parsed_dict.get("size", 0),
-            source=parsed_dict.get("source", "")
+            source=parsed_dict.get("source", ""),
+            attack_type=parsed_dict.get("attack_type", "")
         )
     elif log_type == "syslog":
         message = parsed_dict.get("message", "")

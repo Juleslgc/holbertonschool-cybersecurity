@@ -4,6 +4,9 @@ import argparse
 import re
 from collections.abc import Iterable, Iterator
 from collections import Counter
+from datetime import datetime
+from collections import defaultdict, deque
+from datetime import datetime, timezone
 
 # Pre-compile Apache regex
 APACHE_PATETERN = re.compile(
@@ -226,6 +229,72 @@ def detect_bruteforce(entries):
             }
 
 
+def parse_timestamp(timestamp):
+    formats = [
+        "%d/%b/%Y:%H:%M:%S %z",  # Apache
+        "%b %d %H:%M:%S",        # Syslog
+    ]
+
+    for fmt in formats:
+        try:
+            result = datetime.strptime(timestamp, fmt)
+
+            if fmt == "%b %d %H:%M:%S":
+                result = result.replace(year=datetime.now().year)
+
+            return result
+
+        except ValueError:
+            continue
+
+    return None
+
+
+def detect_burst(entries, threshold=10, window_seconds=60):
+    requests_by_ip = defaultdict(deque)
+    alerted_ips = set()
+
+    for entry in entries:
+        ip = getattr(entry, "ip", "")
+
+        if not ip:
+            continue
+
+        timestamp = getattr(entry, "timestamp", "")
+
+        if isinstance(timestamp, datetime):
+            current_time = timestamp
+        else:
+            current_time = parse_timestamp(timestamp)
+
+        if current_time is None:
+            continue
+
+        if current_time.tzinfo is not None:
+            current_time = current_time.astimezone(
+                timezone.utc
+            ).replace(tzinfo=None)
+
+        timestamps = requests_by_ip[ip]
+
+        timestamps.append(current_time)
+
+        while timestamps and (
+            current_time - timestamps[0]
+        ).total_seconds() > window_seconds:
+            timestamps.popleft()
+
+        if len(timestamps) >= threshold and ip not in alerted_ips:
+            alerted_ips.add(ip)
+
+            yield {
+                "ip": ip,
+                "count": len(timestamps),
+                "window": window_seconds,
+                "alert_type": "BURST"
+            }
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("file", help="Path to the lof file")
@@ -342,3 +411,15 @@ if __name__ == "__main__":
 
     for alert in brute_force_alerts:
         print(f"    {alert['ip']}: {alert['count']} failures")
+
+    print("--- Burst Detection ---")
+
+    burst_alerts = list(detect_burst(entries))
+
+    print(f"[*] BURST alerts: {len(burst_alerts)}")
+
+    for alert in burst_alerts:
+        print(
+            f"    {alert['ip']}: {alert['count']} "
+            f"requests in {alert['window']}s window"
+        )

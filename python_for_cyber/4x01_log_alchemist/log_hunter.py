@@ -32,6 +32,12 @@ BLACKLIST = {
     "192.168.1.66"
 }
 
+SQLI_PATTERNS = [
+    re.compile(r"union\s+select", re.IGNORECASE),
+    re.compile(r"'\s*or\s+1\s*=\s*1", re.IGNORECASE),
+    re.compile(r"--"),
+]
+
 
 def read_stream(file_path: str):
     """Read a file one line at a time using a generator"""
@@ -162,6 +168,19 @@ def check_threat_intel(log_entry):
     return log_entry
 
 
+def detect_sqli(log_entry):
+    path = getattr(log_entry, "path", "")
+    message = getattr(log_entry, "message", "")
+
+    content = f"{path} {message}"
+
+    for pattern in SQLI_PATTERNS:
+        if pattern.search(content):
+            log_entry.attack_type = "SQLi"
+            return log_entry
+    return log_entry
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("file", help="Path to the lof file")
@@ -248,3 +267,17 @@ if __name__ == "__main__":
         f"[*] HIGH alerts: {high_alerts} "
         "entries from blacklisted IPs"
     )
+
+    print("--- Attack Detection ---")
+
+    sqli_count = 0
+    xss_count = 0
+
+    for entry in entries:
+        detect_sqli(entry)
+
+        if getattr(entry, "attack_type", "") == "SQLi":
+            sqli_count += 1
+
+    print(f"[*] SQLi attempts: {sqli_count}")
+    print(f"[*] XSS attempts:  {xss_count}")

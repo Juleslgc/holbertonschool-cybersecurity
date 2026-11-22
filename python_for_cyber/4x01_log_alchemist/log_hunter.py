@@ -13,6 +13,14 @@ APACHE_PATETERN = re.compile(
     r'(?P<size>\d+|-)'
 )
 
+# Pre-complice Syslog regex.
+SYSLOG_PATTERN = re.compile(
+    r'^(?P<date>[A-Z][a-z]{2}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+'
+    r'(?P<host>\S+)\s+'
+    r'(?P<process>\S+):\s+'
+    r'(?P<message>.+)$'
+)
+
 
 def read_stream(file_path: str):
     """Read a file one line at a time using a generator"""
@@ -26,6 +34,15 @@ def read_stream(file_path: str):
 
 def parse_apache_line(line: str) -> dict:
     match = re.search(APACHE_PATETERN, line)
+
+    if match:
+        return match.groupdict()
+
+    return None
+
+
+def parse_syslog_line(line: str) -> dict:
+    match = re.search(SYSLOG_PATTERN, line)
 
     if match:
         return match.groupdict()
@@ -48,8 +65,12 @@ if __name__ == "__main__":
     for line in read_stream(args.file):
         result = parse_apache_line(line)
 
-    if result:
-        apache_count += 1
+        if result:
+            apache_count += 1
+        else:
+            result = parse_syslog_line(line)
+            if result:
+                syslog_count += 1
 
     print("--- Parsing ---")
     print(f"[*] Apache lines:  {apache_count}")

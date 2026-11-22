@@ -3,6 +3,7 @@
 import argparse
 import re
 from collections.abc import Iterable, Iterator
+from collections import Counter
 
 # Pre-compile Apache regex
 APACHE_PATETERN = re.compile(
@@ -202,6 +203,29 @@ def detect_xss(log_entry):
     return log_entry
 
 
+def detect_bruteforce(entries):
+    failures = Counter()
+
+    for entry in entries:
+        ip = getattr(entry, "ip", "")
+
+        if not ip:
+            continue
+
+        if getattr(entry, "status", None) == 401:
+            failures[ip] += 1
+        elif "Failed password" in getattr(entry, "message", ""):
+            failures[ip] += 1
+
+    for ip, count in failures.items():
+        if count > 5:
+            yield {
+                "ip": ip,
+                "count": count,
+                "alert_type": "BRUTE_FORCE"
+            }
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("file", help="Path to the lof file")
@@ -305,3 +329,16 @@ if __name__ == "__main__":
 
     print(f"[*] SQLi attempts: {sqli_count}")
     print(f"[*] XSS attempts:  {xss_count}")
+
+    print("--- Brute Force ---")
+
+    brute_force_alerts = list(detect_bruteforce(entries))
+    brute_force_alerts.sort(
+        key=lambda alert: alert["count"],
+        reverse=True
+    )
+
+    print(f"[*] BRUTE_FORCE alerts: {len(brute_force_alerts)}")
+
+    for alert in brute_force_alerts:
+        print(f"    {alert['ip']}: {alert['count']} failures")

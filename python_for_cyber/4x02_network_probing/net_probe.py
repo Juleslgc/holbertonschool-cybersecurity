@@ -26,11 +26,32 @@ def ping_sweep(subnet: str) -> list:
     return live_ips
 
 
+def get_banner(ip: str, port: int) -> str:
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.settimeout(1)
+
+    try:
+        s.connect((ip, port))
+        s.sendall(b"HEAD / HTTP/1.0\r\n\r\n")
+        banner = s.recv(1024)
+
+        if not banner or b"":
+            return "Unknown"
+
+        return banner.decode(errors="ignore").strip()
+    except (OSError, TimeoutError, ConnectionRefusedError):
+        return "Unknow"
+    finally:
+        s.close
+
+
 def main():
     print("NetProbe v1.0 initialized...")
     print(f"Port 80 is open: {check_port('google.com', 80)}")
     print(f"Port 81 is open: {check_port('google.com', 81)}")
     print(ping_sweep("192.168.1"))
+    print(get_banner("scanme.nmap.org", 22))
+    print(get_banner("scanme.nmap.org", 21))
 
 
 if __name__ == "__main__":

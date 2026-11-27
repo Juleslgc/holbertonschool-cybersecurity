@@ -64,6 +64,26 @@ def scan_ports(ip: str, start_port: int, end_port: int) -> list:
     return list_port
 
 
+def guess_service(port: int) -> str:
+    services = {
+        21: "FTP",
+        22: "SSH",
+        80: "HTTP",
+        443: "HTTPS",
+        3306: "MySQL"
+    }
+    return services.get(port, "Unknown")
+
+
+def get_service_info(ip: str, port: int) -> str:
+    banner = get_banner(ip, port)
+
+    if not banner:
+        return f"{guess_service(port)} (Guessed)"
+
+    return banner
+
+
 def main():
     print("NetProbe v1.0 initialized...")
     print(f"Port 80 is open: {check_port('google.com', 80)}")
@@ -72,6 +92,7 @@ def main():
     print(get_banner("scanme.nmap.org", 22))
     print(get_banner("scanme.nma", 21))
     print(scan_ports("192.168.1.1", 20, 80))
+    print(get_service_info("192.168.1", 80))
 
 
 if __name__ == "__main__":

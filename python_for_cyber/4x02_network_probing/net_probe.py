@@ -39,7 +39,7 @@ def get_banner(ip: str, port: int) -> str:
             return "Unknown"
 
         return banner.decode(errors="ignore").strip()
-    except (OSError, TimeoutError, ConnectionRefusedError, socket.gaierror):
+    except (OSError, socket.gaierror):
         return "Unknow"
     finally:
         s.close()
@@ -51,7 +51,7 @@ def main():
     print(f"Port 81 is open: {check_port('google.com', 81)}")
     print(ping_sweep("192.168.1"))
     print(get_banner("scanme.nmap.org", 22))
-    print(get_banner("scanme.nmap.org", 21))
+    print(get_banner("scanme.nma", 21))
 
 
 if __name__ == "__main__":

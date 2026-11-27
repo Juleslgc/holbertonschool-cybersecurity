@@ -7,10 +7,7 @@ import json
 import time
 
 
-def check_port(ip: str, port: int, delay: float = 0) -> bool:
-    if delay > 0:
-        print(f"[DEBUG] Sleeping {delay}s before next packet...")
-        time.sleep(delay)
+def check_port(ip: str, port: int) -> bool:
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.settimeout(1)
     try:
@@ -42,7 +39,7 @@ def get_banner(ip: str, port: int) -> str:
         s.sendall(b"HEAD / HTTP/1.0\r\n\r\n")
         banner = s.recv(1024)
 
-        if not banner or b"":
+        if not banner:
             return "Unknown"
 
         return banner.decode(errors="ignore").strip()
@@ -52,12 +49,11 @@ def get_banner(ip: str, port: int) -> str:
         s.close()
 
 
-def scan_ports(ip: str, start_port: int, end_port: int,
-               delay: float = 0) -> list:
+def scan_ports(ip: str, start_port: int, end_port: int, delay: float = 0) -> list:
     list_port = []
     print(f"Scanning {ip} from {start_port} to {end_port}")
     with ThreadPoolExecutor(max_workers=50) as executor:
-        futures = {executor.submit(check_port, ip, port, delay): port
+        futures = {executor.submit(scan_with_delay, ip, port, delay): port
                    for port in range(start_port, end_port + 1)}
         for future in as_completed(futures):
             port = futures[future]
@@ -97,7 +93,7 @@ def get_service_info(ip: str, port: int) -> str:
 def check_vulnerability(banner: str) -> str:
     bad_sign = ["vsftpd 2.3.4", "apache 2.2.8"]
     for sign in bad_sign:
-        if sign in banner:
+        if sign in banner.lower():
             return ("[VULNERABLE]")
     return ""
 
@@ -147,6 +143,14 @@ def valid_port_range(value):
         raise argparse.ArgumentTypeError(
             "Use the format START-END (example: 1-22)"
         )
+
+
+def scan_with_delay(ip: str, port: int, delay: float) -> bool:
+    if delay > 0:
+        print(f"[DEBUG] Sleeping {delay}s before next packet...")
+        time.sleep(delay)
+
+    return check_port(ip, port)
 
 
 def main():

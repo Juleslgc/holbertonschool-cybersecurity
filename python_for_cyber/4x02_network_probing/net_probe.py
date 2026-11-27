@@ -9,7 +9,7 @@ def check_port(ip: str, port: int) -> bool:
     try:
         s.connect((ip, port))
         return True
-    except (TimeoutError, ConnectionRefusedError):
+    except (TimeoutError, ConnectionRefusedError, OSError):
         return False
     finally:
         s.close()

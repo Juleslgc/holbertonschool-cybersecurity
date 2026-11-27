@@ -56,11 +56,13 @@ def scan_ports(ip: str, start_port: int, end_port: int) -> list:
             port = futures[future]
             if future.result():
                 banner = get_banner(ip, port)
+                vuln = check_vulnerability(banner)
                 list_port.append({
                     'port': port,
-                    'service': banner
+                    'service': banner,
+                    'Vulnerability': vuln
                 })
-                print(f"[+] Port {port} Open: {banner}")
+                print(f"[+] Port {port} Open: {banner} {vuln}")
     return list_port
 
 
@@ -82,6 +84,14 @@ def get_service_info(ip: str, port: int) -> str:
         return f"{guess_service(port)} (Guessed)"
 
     return banner
+
+
+def check_vulnerability(banner: str) -> str:
+    bad_sign = ["vsftpd 2.3.4", "Apache 2.2.8"]
+    for sign in bad_sign:
+        if sign in banner:
+            return ("[VULNERABLE]")
+    return ""
 
 
 def main():

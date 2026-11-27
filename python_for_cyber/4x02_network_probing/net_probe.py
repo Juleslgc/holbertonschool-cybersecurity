@@ -45,6 +45,20 @@ def get_banner(ip: str, port: int) -> str:
         s.close()
 
 
+def scan_ports(ip: str, start_port: int, end_port: int) -> list:
+    list_port = []
+    for port in range(start_port, end_port + 1):
+        if check_port(ip, port):
+            banner = get_banner(ip, port)
+            list_port.append({
+                'port': port,
+                'service': banner
+            })
+    print(f"Scanning {ip} from {start_port} to {end_port}")
+    print(f"[+] Port {port} Open: {banner}")
+    return list_port
+
+
 def main():
     print("NetProbe v1.0 initialized...")
     print(f"Port 80 is open: {check_port('google.com', 80)}")
@@ -52,6 +66,7 @@ def main():
     print(ping_sweep("192.168.1"))
     print(get_banner("scanme.nmap.org", 22))
     print(get_banner("scanme.nma", 21))
+    print(scan_ports("192.168.1.1", 20, 80))
 
 
 if __name__ == "__main__":

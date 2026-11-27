@@ -159,7 +159,7 @@ def main():
     args = parse_args()
     start_port, end_port = args.ports
 
-    results = scan_ports(args.target, start_port, end_port, args.delay)
+    results = scan_ports(args.target, start_port, end_port)
 
     if args.output:
         with open(args.output, "w", encoding="utf-8") as file:

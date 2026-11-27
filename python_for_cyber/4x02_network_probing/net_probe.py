@@ -2,6 +2,8 @@
 
 import socket
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import argparse
+import json
 
 
 def check_port(ip: str, port: int) -> bool:
@@ -59,8 +61,9 @@ def scan_ports(ip: str, start_port: int, end_port: int) -> list:
                 vuln = check_vulnerability(banner)
                 list_port.append({
                     'port': port,
+                    'state': 'open',
                     'service': banner,
-                    'Vulnerability': vuln
+                    'Vulnerability': "YES" if vuln else "NO"
                 })
                 print(f"[+] Port {port} Open: {banner} {vuln}")
     return list_port
@@ -94,15 +97,58 @@ def check_vulnerability(banner: str) -> str:
     return ""
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(description="NetProbe - Network Scanner")
+
+    parser.add_argument(
+        "-t", "--target",
+        required=True,
+        help="Target IP address"
+    )
+
+    parser.add_argument(
+        "-p", "--ports",
+        type=valid_port_range,
+        default="1-1000",
+        help="Port range (example: 1-1000)"
+    )
+
+    parser.add_argument(
+        "-o", "--output",
+        help="Output JSON file"
+    )
+
+    return parser.parse_args()
+
+
+def valid_port_range(value):
+    try:
+        start_port = int(value.split("-")[0])
+        end_port = int(value.split("-")[1])
+
+        if start_port < 1 or end_port > 65535 or start_port > end_port:
+            raise ValueError
+
+        return start_port, end_port
+
+    except (ValueError, IndexError):
+        raise argparse.ArgumentTypeError(
+            "Use the format START-END (example: 1-22)"
+        )
+
+
 def main():
     print("NetProbe v1.0 initialized...")
-    print(f"Port 80 is open: {check_port('google.com', 80)}")
-    print(f"Port 81 is open: {check_port('google.com', 81)}")
-    print(ping_sweep("192.168.1"))
-    print(get_banner("scanme.nmap.org", 22))
-    print(get_banner("scanme.nma", 21))
-    print(scan_ports("192.168.1.1", 20, 80))
-    print(get_service_info("192.168.1", 80))
+    args = parse_args()
+    start_port, end_port = args.ports
+
+    results = scan_ports(args.target, start_port, end_port)
+
+    if args.output:
+        with open(args.output, "w", encoding="utf-8") as file:
+            json.dump(results, file, indent=4)
+
+        print(f"Results saved to {args.output}")
 
 
 if __name__ == "__main__":

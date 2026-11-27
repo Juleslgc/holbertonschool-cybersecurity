@@ -40,7 +40,7 @@ def get_banner(ip: str, port: int) -> str:
 
         return banner.decode(errors="ignore").strip()
     except (OSError, socket.gaierror):
-        return "Unknow"
+        return "Unknown"
     finally:
         s.close()
 

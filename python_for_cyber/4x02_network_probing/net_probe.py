@@ -47,6 +47,7 @@ def get_banner(ip: str, port: int) -> str:
 
 def scan_ports(ip: str, start_port: int, end_port: int) -> list:
     list_port = []
+    print(f"Scanning {ip} from {start_port} to {end_port}")
     for port in range(start_port, end_port + 1):
         if check_port(ip, port):
             banner = get_banner(ip, port)
@@ -54,8 +55,7 @@ def scan_ports(ip: str, start_port: int, end_port: int) -> list:
                 'port': port,
                 'service': banner
             })
-    print(f"Scanning {ip} from {start_port} to {end_port}")
-    print(f"[+] Port {port} Open: {banner}")
+            print(f"[+] Port {port} Open: {banner}")
     return list_port
 
 

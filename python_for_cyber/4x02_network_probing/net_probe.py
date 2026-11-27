@@ -87,7 +87,7 @@ def get_service_info(ip: str, port: int) -> str:
 
 
 def check_vulnerability(banner: str) -> str:
-    bad_sign = ["vsftpd 2.3.4", "Apache 2.2.8"]
+    bad_sign = ["vsftpd 2.3.4", "apache 2.2.8"]
     for sign in bad_sign:
         if sign in banner:
             return ("[VULNERABLE]")

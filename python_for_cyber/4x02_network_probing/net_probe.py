@@ -4,9 +4,13 @@ import socket
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import argparse
 import json
+import time
 
 
-def check_port(ip: str, port: int) -> bool:
+def check_port(ip: str, port: int, delay: float = 0) -> bool:
+    if delay > 0:
+        print(f"[DEBUG] Sleeping {delay}s before next packet...")
+        time.sleep(delay)
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.settimeout(1)
     try:
@@ -48,11 +52,12 @@ def get_banner(ip: str, port: int) -> str:
         s.close()
 
 
-def scan_ports(ip: str, start_port: int, end_port: int) -> list:
+def scan_ports(ip: str, start_port: int, end_port: int,
+               delay: float = 0) -> list:
     list_port = []
     print(f"Scanning {ip} from {start_port} to {end_port}")
     with ThreadPoolExecutor(max_workers=50) as executor:
-        futures = {executor.submit(check_port, ip, port): port
+        futures = {executor.submit(check_port, ip, port, delay): port
                    for port in range(start_port, end_port + 1)}
         for future in as_completed(futures):
             port = futures[future]
@@ -118,6 +123,13 @@ def parse_args():
         help="Output JSON file"
     )
 
+    parser.add_argument(
+        "-d", "--delay",
+        type=float,
+        default=0,
+        help="Delay in seconds between scan attempts"
+    )
+
     return parser.parse_args()
 
 
@@ -142,7 +154,7 @@ def main():
     args = parse_args()
     start_port, end_port = args.ports
 
-    results = scan_ports(args.target, start_port, end_port)
+    results = scan_ports(args.target, start_port, end_port, args.delay)
 
     if args.output:
         with open(args.output, "w", encoding="utf-8") as file:

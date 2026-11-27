@@ -42,7 +42,7 @@ def get_banner(ip: str, port: int) -> str:
     except (OSError, TimeoutError, ConnectionRefusedError):
         return "Unknow"
     finally:
-        s.close
+        s.close()
 
 
 def main():

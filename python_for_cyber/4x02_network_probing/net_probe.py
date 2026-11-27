@@ -34,13 +34,12 @@ def get_banner(ip: str, port: int) -> str:
         s.connect((ip, port))
         s.sendall(b"HEAD / HTTP/1.0\r\n\r\n")
         banner = s.recv(1024)
-        s.close()
 
         if not banner or b"":
             return "Unknown"
 
         return banner.decode(errors="ignore").strip()
-    except (OSError, TimeoutError, ConnectionRefusedError):
+    except (OSError, TimeoutError, ConnectionRefusedError, socket.gaierror):
         return "Unknow"
     finally:
         s.close()

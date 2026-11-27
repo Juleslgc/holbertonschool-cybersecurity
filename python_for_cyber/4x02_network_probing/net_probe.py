@@ -49,7 +49,8 @@ def get_banner(ip: str, port: int) -> str:
         s.close()
 
 
-def scan_ports(ip: str, start_port: int, end_port: int, delay: float = 0) -> list:
+def scan_ports(ip: str, start_port: int, end_port: int,
+               delay: float = 0) -> list:
     list_port = []
     print(f"Scanning {ip} from {start_port} to {end_port}")
     with ThreadPoolExecutor(max_workers=50) as executor:

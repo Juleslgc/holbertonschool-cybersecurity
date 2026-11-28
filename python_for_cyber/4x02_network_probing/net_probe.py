@@ -10,9 +10,6 @@ SCAN_DELAY = 0
 
 
 def check_port(ip: str, port: int) -> bool:
-    if SCAN_DELAY > 0:
-        print(f"[DEBUG] Sleeping {SCAN_DELAY}s before next packet... ")
-        time.sleep(SCAN_DELAY)
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.settimeout(1)
     try:
@@ -58,8 +55,12 @@ def scan_ports(ip: str, start_port: int, end_port: int) -> list:
     list_port = []
     print(f"Scanning {ip} from {start_port} to {end_port}")
     with ThreadPoolExecutor(max_workers=50) as executor:
-        futures = {executor.submit(check_port, ip, port): port
-                   for port in range(start_port, end_port + 1)}
+        futures = {}
+        for port in range(start_port, end_port + 1):
+            futures[executor.submit(check_port, ip, port)] = port
+            if SCAN_DELAY > 0:
+                print(f"[DEBUG] Sleeping {SCAN_DELAY}s before next packet...")
+                time.sleep(SCAN_DELAY)
         for future in as_completed(futures):
             port = futures[future]
             if future.result():

@@ -8,6 +8,7 @@ import time
 
 SCAN_DELAY = 0
 
+
 def check_port(ip: str, port: int) -> bool:
     if SCAN_DELAY > 0:
         print(f"[DEBUG] Sleeping {SCAN_DELAY}s before next packet... ")

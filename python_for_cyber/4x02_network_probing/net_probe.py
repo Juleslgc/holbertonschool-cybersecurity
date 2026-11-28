@@ -6,8 +6,12 @@ import argparse
 import json
 import time
 
+SCAN_DELAY = 0
 
 def check_port(ip: str, port: int) -> bool:
+    if SCAN_DELAY > 0:
+        print(f"[DEBUG] Sleeping {SCAN_DELAY}s before next packet... ")
+        time.sleep(SCAN_DELAY)
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.settimeout(1)
     try:
@@ -49,36 +53,24 @@ def get_banner(ip: str, port: int) -> str:
         s.close()
 
 
-def scan_ports(ip: str, start_port: int, end_port: int,
-               delay: float = 0) -> list:
+def scan_ports(ip: str, start_port: int, end_port: int) -> list:
     list_port = []
     print(f"Scanning {ip} from {start_port} to {end_port}")
     with ThreadPoolExecutor(max_workers=50) as executor:
-        futures = {}
-
-        for port in range(start_port, end_port + 1):
-            futures[executor.submit(check_port, ip, port)] = port
-
-            if delay > 0:
-                print(f"[DEBUG] Sleeping {delay}s before next packet...")
-                time.sleep(delay)
-
+        futures = {executor.submit(check_port, ip, port): port
+                   for port in range(start_port, end_port + 1)}
         for future in as_completed(futures):
             port = futures[future]
-
             if future.result():
                 banner = get_banner(ip, port)
                 vuln = check_vulnerability(banner)
-
                 list_port.append({
                     'port': port,
                     'state': 'open',
                     'service': banner,
                     'Vulnerability': "YES" if vuln else "NO"
                 })
-
                 print(f"[+] Port {port} Open: {banner} {vuln}")
-
     return list_port
 
 
@@ -158,11 +150,13 @@ def valid_port_range(value):
 
 
 def main():
+    global SCAN_DELAY
     print("NetProbe v1.0 initialized...")
     args = parse_args()
     start_port, end_port = args.ports
+    SCAN_DELAY = args.delay
 
-    results = scan_ports(args.target, start_port, end_port, args.delay)
+    results = scan_ports(args.target, start_port, end_port)
 
     if args.output:
         with open(args.output, "w", encoding="utf-8") as file:

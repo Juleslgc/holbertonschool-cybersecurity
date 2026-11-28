@@ -54,20 +54,31 @@ def scan_ports(ip: str, start_port: int, end_port: int,
     list_port = []
     print(f"Scanning {ip} from {start_port} to {end_port}")
     with ThreadPoolExecutor(max_workers=50) as executor:
-        futures = {executor.submit(scan_with_delay, ip, port, delay): port
-                   for port in range(start_port, end_port + 1)}
+        futures = {}
+
+        for port in range(start_port, end_port + 1):
+            futures[executor.submit(check_port, ip, port)] = port
+
+            if delay > 0:
+                print(f"[DEBUG] Sleeping {delay}s before next packet...")
+                time.sleep(delay)
+
         for future in as_completed(futures):
             port = futures[future]
+
             if future.result():
                 banner = get_banner(ip, port)
                 vuln = check_vulnerability(banner)
+
                 list_port.append({
                     'port': port,
                     'state': 'open',
                     'service': banner,
                     'Vulnerability': "YES" if vuln else "NO"
                 })
+
                 print(f"[+] Port {port} Open: {banner} {vuln}")
+
     return list_port
 
 
@@ -146,20 +157,12 @@ def valid_port_range(value):
         )
 
 
-def scan_with_delay(ip: str, port: int, delay: float) -> bool:
-    if delay > 0:
-        print(f"[DEBUG] Sleeping {delay}s before next packet...")
-        time.sleep(delay)
-
-    return check_port(ip, port)
-
-
 def main():
     print("NetProbe v1.0 initialized...")
     args = parse_args()
     start_port, end_port = args.ports
 
-    results = scan_ports(args.target, start_port, end_port)
+    results = scan_ports(args.target, start_port, end_port, args.delay)
 
     if args.output:
         with open(args.output, "w", encoding="utf-8") as file:

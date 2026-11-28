@@ -57,10 +57,10 @@ def scan_ports(ip: str, start_port: int, end_port: int) -> list:
     with ThreadPoolExecutor(max_workers=50) as executor:
         futures = {}
         for port in range(start_port, end_port + 1):
-            futures[executor.submit(check_port, ip, port)] = port
             if SCAN_DELAY > 0:
                 print(f"[DEBUG] Sleeping {SCAN_DELAY}s before next packet...")
                 time.sleep(SCAN_DELAY)
+            futures[executor.submit(check_port, ip, port)] = port
         for future in as_completed(futures):
             port = futures[future]
             if future.result():
@@ -128,7 +128,7 @@ def parse_args():
     parser.add_argument(
         "-d", "--delay",
         type=float,
-        default=0,
+        default=0.0,
         help="Delay in seconds between scan attempts"
     )
 

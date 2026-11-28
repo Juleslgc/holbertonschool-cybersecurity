@@ -5,8 +5,10 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import argparse
 import json
 import time
+import random
 
 SCAN_DELAY = 0
+SCAN_RANDOM = False
 
 
 def check_port(ip: str, port: int) -> bool:
@@ -54,9 +56,14 @@ def get_banner(ip: str, port: int) -> str:
 def scan_ports(ip: str, start_port: int, end_port: int) -> list:
     list_port = []
     print(f"Scanning {ip} from {start_port} to {end_port}")
+    ports = list(range(start_port, end_port + 1))
+
+    if SCAN_RANDOM:
+        print("Scanning ports randomly...")
+        random.shuffle(ports)
     with ThreadPoolExecutor(max_workers=50) as executor:
         futures = {}
-        for port in range(start_port, end_port + 1):
+        for port in ports:
             if SCAN_DELAY > 0:
                 print(f"[DEBUG] Sleeping {SCAN_DELAY}s before next packet...")
                 time.sleep(SCAN_DELAY)
@@ -132,6 +139,12 @@ def parse_args():
         help="Delay in seconds between scan attempts"
     )
 
+    parser.add_argument(
+        "-r", "--random",
+        action="store_true",
+        help="Scan ports in random order"
+    )
+
     return parser.parse_args()
 
 
@@ -152,11 +165,12 @@ def valid_port_range(value):
 
 
 def main():
-    global SCAN_DELAY
+    global SCAN_DELAY, SCAN_RANDOM
     print("NetProbe v1.0 initialized...")
     args = parse_args()
     start_port, end_port = args.ports
     SCAN_DELAY = args.delay
+    SCAN_RANDOM = args.random
 
     results = scan_ports(args.target, start_port, end_port)
 
